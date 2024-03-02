@@ -17,7 +17,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @Getter
-@ToString
+@ToString(callSuper = true)
 @Table(indexes = {
         @Index(columnList = "title"),
         @Index(columnList = "hashtag"),
@@ -37,8 +37,10 @@ public class Article {
 
     @Setter private String hashtag; // 해시태그
 
+    @Setter @ManyToOne(optional = false) private UserAccount userAccount; // 유저 정보 (ID)
+
     @ToString.Exclude
-    @OrderBy("id")
+    @OrderBy("createdAt DESC")
     @OneToMany(mappedBy = "article", cascade = CascadeType.ALL)
     private final Set<ArticleComment> articleComments = new LinkedHashSet<>();
 
@@ -48,17 +50,33 @@ public class Article {
     @LastModifiedDate @Column(nullable = false) private LocalDateTime modifiedAt; // 수정일시
     @LastModifiedBy @Column(nullable = false, length = 100) private String modifiedBy; // 수정자
 
+    @ToString.Exclude
+    @Column(name = "email")
+    private String email;
+
+    @ToString.Exclude
+    @Column(name = "nickname")
+    private String nickname;
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
     protected Article() {}
 
-    private Article(String title, String content, String hashtag) {
+    private Article(UserAccount userAccount, String title, String content, String hashtag) {
+        this.userAccount = userAccount;
         this.title = title;
         this.content = content;
         this.hashtag = hashtag;
     }
 
-    public static Article of(String title, String content, String hashtag) {
-        return new Article(title, content, hashtag);
+    public static Article of(UserAccount userAccount, String title, String content, String hashtag) {
+        return new Article(userAccount, title, content, hashtag);
     }
 
     //동일성, 동등성 검사
