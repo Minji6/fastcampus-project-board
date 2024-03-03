@@ -34,7 +34,6 @@ class ArticleServiceTest {
     @InjectMocks private ArticleService sut;
     @Mock private ArticleRepository articleRepository;
 
-
     @DisplayName("검색어 없이 게시글을 검색하면, 게시글 페이지를 반환한다.")
     @Test
     void givenNoSearchParameters_whenSearchingArticles_thenReturnsArticlePage() {
