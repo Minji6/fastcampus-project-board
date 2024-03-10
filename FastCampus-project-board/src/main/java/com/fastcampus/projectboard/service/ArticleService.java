@@ -2,12 +2,15 @@ package com.fastcampus.projectboard.service;
 
 import com.fastcampus.projectboard.domain.Article;
 import com.fastcampus.projectboard.domain.type.SearchType;
+import com.fastcampus.projectboard.domain.UserAccount;
 import com.fastcampus.projectboard.dto.ArticleDto;
 import com.fastcampus.projectboard.dto.ArticleWithCommentsDto;
 import com.fastcampus.projectboard.repository.ArticleRepository;
+import com.fastcampus.projectboard.repository.UserAccountRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,7 @@ import jakarta.persistence.EntityNotFoundException;
 @RequiredArgsConstructor
 @Service
 public class ArticleService {
+    private final UserAccountRepository userAccountRepository;
 
     private final ArticleRepository articleRepository;
 
@@ -52,7 +56,10 @@ public class ArticleService {
     }
 
     public void saveArticle(ArticleDto dto) {
-        articleRepository.save(dto.toEntity());
+        UserAccount userAccount = userAccountRepository.getReferenceById(dto.userAccountDto().userId());
+
+        Article article = dto.toEntity(userAccount);
+        articleRepository.save(article);
     }
 
     public void updateArticle(ArticleDto dto) {
@@ -68,5 +75,22 @@ public class ArticleService {
 
     public void deleteArticle(long articleId) {
         articleRepository.deleteById(articleId);
+    }
+
+    public long getArticleCount() {
+        return articleRepository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ArticleDto> searchArticlesViaHashtag(String hashtag, Pageable pageable) {
+        if (hashtag == null || hashtag.isBlank()) {
+            return Page.empty(pageable);
+        }
+
+        return articleRepository.findByHashtag(hashtag, pageable).map(ArticleDto::from);
+    }
+
+    public List<String> getHashtags() {
+        return articleRepository.findAllDistinctHashtags();
     }
 }
